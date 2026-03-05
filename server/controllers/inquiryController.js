@@ -1,5 +1,28 @@
 const Inquiry = require('../models/Inquiry');
 
+// --- OPTIMIZED AI LOOKUP TABLES (O(1) Set-based lookups) ---
+const POSITIVE_WORDS = new Set(['love', 'interested', 'great', 'quality', 'looking forward', 'impressed', 'amazing', 'excellent', 'fantastic']);
+const FRUSTRATED_WORDS = new Set(['disappointed', 'delay', 'slow', 'issue', 'problem', 'urgent', 'asap', 'stuck', 'waiting', 'waiting']);
+const TECHNICAL_WORDS = new Set(['gots', 'organic', 'technical', 'eco', 'sustainable', 'recycled']);
+
+// Simple in-memory cache for repeated analyses (TTL: 5 minutes)
+const analysisCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
+// Helper: Check if any word from Set A exists in string B
+const containsAnyWord = (text, wordSet) => {
+    const words = text.split(/\s+/);
+    for (const word of words) {
+        if (wordSet.has(word)) return true;
+    }
+    return false;
+};
+
+// Helper: Generate cache key from specs
+const getCacheKey = (specs) => {
+    return specs.slice(0, 100); // First 100 chars as key
+};
+
 // POST: Create Inquiry with AI Logic
 exports.createInquiry = async (req, res) => {
     try {
@@ -10,20 +33,39 @@ exports.createInquiry = async (req, res) => {
         let category = 'Standard Dyeing';
         let sentiment = 'Neutral';
 
-        // 1. Sentiment & Tone Detection Logic
-        const positiveWords = ['love', 'interested', 'great', 'quality', 'looking forward', 'impressed'];
-        const frustratedWords = ['disappointed', 'delay', 'slow', 'issue', 'problem', 'urgent', 'asap'];
+        // Check cache first (O(1) lookup)
+        const cacheKey = getCacheKey(specs);
+        const cached = analysisCache.get(cacheKey);
+        
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+            priority = cached.priority;
+            category = cached.category;
+            sentiment = cached.sentiment;
+        } else {
+            // 1. Sentiment & Tone Detection Logic - O(n) where n = words in specs
+            const hasFrustrated = containsAnyWord(specs, FRUSTRATED_WORDS);
+            const hasPositive = containsAnyWord(specs, POSITIVE_WORDS);
 
-        if (frustratedWords.some(word => specs.includes(word))) {
-            sentiment = 'Frustrated/Urgent';
-            priority = 'High'; // Auto-escalate if frustrated
-        } else if (positiveWords.some(word => specs.includes(word))) {
-            sentiment = 'Highly Interested';
-        }
+            if (hasFrustrated) {
+                sentiment = 'Frustrated/Urgent';
+                priority = 'High'; // Auto-escalate if frustrated
+            } else if (hasPositive) {
+                sentiment = 'Highly Interested';
+            }
 
-        // 2. Technical Categorization
-        if (specs.includes('gots') || specs.includes('organic') || specs.includes('technical')) {
-            category = 'Technical Textile';
+            // 2. Technical Categorization - O(n) lookup
+            const isTechnical = containsAnyWord(specs, TECHNICAL_WORDS);
+            if (isTechnical) {
+                category = 'Technical Textile';
+            }
+
+            // Cache the analysis result
+            analysisCache.set(cacheKey, {
+                priority,
+                category,
+                sentiment,
+                timestamp: Date.now()
+            });
         }
 
         const inquiry = await Inquiry.create({

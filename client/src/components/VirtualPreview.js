@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 
-const VirtualPreview = ({ selectedDesign, selectedMaterial }) => {
-  // Mapping the design names to actual texture images or CSS filters
-  const textureStyles = {
-    'Polished Metal': 'grayscale(0.5) brightness(1.2) contrast(1.5)',
-    'Rough Concrete': 'sepia(0.3) contrast(1.2) brightness(0.9)',
-    'Smooth Marble': 'opacity(0.8) contrast(1.1)',
-    'Rusted Metal': 'hue-rotate(15deg) contrast(1.4) saturate(1.5)'
-  };
+// Memoized texture styles (computed once, outside component)
+const TEXTURE_STYLES = Object.freeze({
+  'Polished Metal': 'grayscale(0.5) brightness(1.2) contrast(1.5)',
+  'Rough Concrete': 'sepia(0.3) contrast(1.2) brightness(0.9)',
+  'Smooth Marble': 'opacity(0.8) contrast(1.1)',
+  'Rusted Metal': 'hue-rotate(15deg) contrast(1.4) saturate(1.5)'
+});
+
+// Preload texture images for faster rendering
+const TEXTURE_URLS = [
+  'https://www.transparenttextures.com/patterns/dark-leather.png'
+];
+
+// Preload images on module load
+if (typeof window !== 'undefined') {
+  TEXTURE_URLS.forEach(url => {
+    const img = new Image();
+    img.src = url;
+  });
+}
+
+const VirtualPreview = React.memo(({ selectedDesign, selectedMaterial }) => {
+  // Memoize filter computation - only recalculates when props change
+  const filterStyle = useMemo(() => {
+    return TEXTURE_STYLES[selectedDesign] || 'none';
+  }, [selectedDesign]);
+
+  // Memoize background color computation
+  const bgColor = useMemo(() => {
+    return selectedMaterial.includes('Linen') ? '#f3e5ab' : '#ffffff';
+  }, [selectedMaterial]);
 
   return (
     <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
@@ -27,9 +50,9 @@ const VirtualPreview = ({ selectedDesign, selectedMaterial }) => {
         <div 
           className="absolute inset-0 w-full h-full transition-all duration-700 ease-in-out mix-blend-multiply"
           style={{ 
-            backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-leather.png')`, // Example texture overlay
-            filter: textureStyles[selectedDesign] || 'none',
-            backgroundColor: selectedMaterial.includes('Linen') ? '#f3e5ab' : '#ffffff' 
+            backgroundImage: `url('https://www.transparenttextures.com/patterns/dark-leather.png')`,
+            filter: filterStyle,
+            backgroundColor: bgColor
           }}
         />
         
@@ -39,6 +62,8 @@ const VirtualPreview = ({ selectedDesign, selectedMaterial }) => {
       </div>
     </div>
   );
-};
+});
+
+VirtualPreview.displayName = 'VirtualPreview';
 
 export default VirtualPreview;
