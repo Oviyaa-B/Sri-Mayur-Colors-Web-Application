@@ -7,8 +7,12 @@ import autoTable from 'jspdf-autotable';
 import PageTransition from '../components/PageTransition';
 import { inquiryService } from '../services/api';
 import { INQUIRY_STATUS } from '../config/constants';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [inquiries, setInquiries] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
@@ -104,6 +108,7 @@ const Dashboard = () => {
                                 <ClipboardList size={28} />
                             </div>
                             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Manager Dashboard</h2>
+                            {user && <span className="ml-4 px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-xs font-bold uppercase">{user.role}</span>}
                         </div>
                         
                         <div className="flex items-center gap-4">
@@ -176,7 +181,8 @@ const Dashboard = () => {
                                             <select 
                                                 value={iq.status} 
                                                 onChange={(e) => handleStatusUpdate(iq._id, e.target.value)}
-                                                className="text-[11px] font-bold border-2 border-slate-100 rounded-lg p-2 outline-none bg-slate-50 cursor-pointer"
+                                                disabled={user?.role !== 'admin'}
+                                                className={`text-[11px] font-bold border-2 border-slate-100 rounded-lg p-2 outline-none ${user?.role === 'admin' ? 'bg-slate-50 cursor-pointer hover:border-blue-300' : 'bg-slate-100 cursor-not-allowed opacity-70'} transition-all`}
                                             >
                                                 <option value={INQUIRY_STATUS.PENDING}>{INQUIRY_STATUS.PENDING}</option>
                                                 <option value={INQUIRY_STATUS.PROCESSING}>{INQUIRY_STATUS.PROCESSING}</option>

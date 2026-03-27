@@ -3,7 +3,7 @@
  * Centralized environment variable management
  */
 
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 module.exports = {
   // Server Configuration
@@ -15,7 +15,7 @@ module.exports = {
   
   // CORS Configuration
   corsOptions: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'] || process.env.CLIENT_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   },

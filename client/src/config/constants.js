@@ -15,8 +15,10 @@ export const ROUTES = {
   FACTORY: '/factory',
   PROCESS: '/process',
   MATCHER: '/matcher',
+  DESIGN_LAB: '/design-lab',
   SHOP: '/shop',
   BULK_INQUIRY: '/bulk',
+  LOGIN: '/login',
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
     INQUIRIES: '/admin/inquiries',

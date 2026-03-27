@@ -5,7 +5,7 @@ const env = require('./config/env');
 const connectDB = require('./config/db');
 
 // Load environment variables
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const app = express();
 
@@ -14,7 +14,10 @@ app.use(cors(env.corsOptions));
 app.use(express.json());
 
 // Import the routes
+const authRoutes = require('./routes/authRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
+
+app.use(`${env.api.prefix}/auth`, authRoutes);
 app.use(`${env.api.prefix}/inquiries`, inquiryRoutes);
 
 // Health check endpoint

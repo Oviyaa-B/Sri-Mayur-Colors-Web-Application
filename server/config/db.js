@@ -4,6 +4,10 @@
  */
 
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Fix for "querySrv ECONNREFUSED" on Windows
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 const env = require('./env');
 
 const connectDB = async () => {

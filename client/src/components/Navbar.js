@@ -1,9 +1,12 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, Home, Factory, Package, ArrowRight } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Sparkles, LayoutDashboard, Home, Factory, Package, ArrowRight, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path) => location.pathname === path ? "text-blue-600 bg-blue-50" : "text-slate-600 hover:bg-slate-50";
 
   return (
@@ -22,16 +25,38 @@ const Navbar = () => {
 
         {/* Global Navigation Hub */}
         <div className="hidden lg:flex items-center gap-2">
-          <NavLink to="/" label="Home" active={isActive('/')} />
-          <NavLink to="/factory" label="Facility" active={isActive('/factory')} />
-          <NavLink to="/matcher" label="AI Design Lab" active={isActive('/matcher')} icon={<Sparkles size={14} className="text-blue-500" />} />
-          <NavLink to="/admin/dashboard" label="Logistics" active={isActive('/admin/dashboard')} />
+          {user?.role !== 'admin' && (
+            <>
+              <NavLink to="/" label="Home" active={isActive('/')} />
+              <NavLink to="/factory" label="Facility" active={isActive('/factory')} />
+              <NavLink to="/matcher" label="Color Matcher" active={isActive('/matcher')} />
+              <NavLink to="/design-lab" label="3D Design Lab" active={isActive('/design-lab')} icon={<Sparkles size={14} className="text-blue-500" />} />
+            </>
+          )}
+          
+          {(user?.role === 'admin' || user?.role === 'user') && (
+            <NavLink to="/admin/dashboard" label="Logistics" active={isActive('/admin/dashboard')} />
+          )}
         </div>
 
-        {/* High-Conversion CTA */}
-        <Link to="/bulk" className="bg-blue-600 text-white px-7 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 flex items-center gap-2">
-          <Package size={16} /> Bulk Inquiry <ArrowRight size={14} />
-        </Link>
+        {/* High-Conversion CTA & Logout */}
+        <div className="flex items-center gap-4">
+          {user?.role !== 'admin' && (
+            <Link to="/bulk" className="bg-blue-600 text-white px-7 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 flex items-center gap-2">
+              <Package size={16} /> Bulk Inquiry <ArrowRight size={14} />
+            </Link>
+          )}
+          
+          {user && (
+            <button 
+              onClick={() => { logout(); navigate('/login'); }}
+              className="px-4 py-2 border-2 border-slate-100 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 hover:border-red-100 font-bold text-sm transition-all flex items-center gap-2"
+              title="Logout"
+            >
+               <LogOut size={16} /> Logout
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );
